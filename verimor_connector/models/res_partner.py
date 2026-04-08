@@ -229,7 +229,7 @@ class ResPartner(models.Model):
                 }
             else:
                 raise UserError(
-                    self.env._('Bulutsantralim call failed (HTTP %s): %s', resp.status_code, resp.text)
+                    self.env._('Bulutsantralim call failed (HTTP %(code)s): %(text)s', code=resp.status_code, text=resp.text)
                 )
         except requests.RequestException as exc:
             raise UserError(self.env._('Bulutsantralim API error: %s', str(exc))) from exc
