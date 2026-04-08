@@ -21,19 +21,16 @@ class VerimorCallLog(models.Model):
         help='Unique identifier provided by Bulutsantralim for this call leg.',
     )
     caller_number = fields.Char(
-        string='Caller Number',
         index=True,
         help='The phone number of the calling party (E.164 format).',
     )
     called_number = fields.Char(
-        string='Called Number',
         help='The DID / extension that was dialled.',
     )
 
     # ── Matched partner ────────────────────────────────────────────────────────
     partner_id = fields.Many2one(
         'res.partner',
-        string='Partner',
         ondelete='set null',
         help='Matched res.partner record (looked up by caller_number).',
     )
@@ -48,12 +45,10 @@ class VerimorCallLog(models.Model):
             ('MISSED', 'Missed'),
             ('VOICEMAIL', 'Voicemail'),
         ],
-        string='Event Type',
         required=True,
         default='INCOMING',
     )
     call_time = fields.Datetime(
-        string='Call Time',
         required=True,
         default=fields.Datetime.now,
     )
@@ -63,13 +58,11 @@ class VerimorCallLog(models.Model):
         help='Call duration in seconds (populated on HANGUP events).',
     )
     hangup_cause = fields.Char(
-        string='Hangup Cause',
         help='SIP hangup cause code / reason returned by Bulutsantralim.',
     )
 
     # ── Raw webhook payload ────────────────────────────────────────────────────
     raw_payload = fields.Text(
-        string='Raw Payload',
         readonly=True,
         help='Full JSON body received from the Bulutsantralim webhook.',
     )

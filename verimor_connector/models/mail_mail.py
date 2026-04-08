@@ -12,7 +12,7 @@ Rules:
 """
 import logging
 
-from odoo import _, api, fields, models
+from odoo import api, fields, models
 
 _logger = logging.getLogger(__name__)
 
@@ -58,7 +58,7 @@ class MailMail(models.Model):
                 # Every individual recipient has rejected; cancel the mail
                 mail.write({
                     'state': 'cancel',
-                    'failure_reason': _(
+                    'failure_reason': self.env._(
                         'All recipients have rejected IYS e-mail consent (EPOSTA RET). '
                         'Commercial e-mail blocked.'
                     ),

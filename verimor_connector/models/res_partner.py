@@ -3,7 +3,7 @@ import logging
 import re
 import requests
 
-from odoo import _, api, fields, models
+from odoo import api, fields, models
 from odoo.exceptions import UserError
 
 _logger = logging.getLogger(__name__)
@@ -195,18 +195,18 @@ class ResPartner(models.Model):
         extension = ICP.get_param('verimor.pbx.extension')
 
         if not api_key:
-            raise UserError(_('Bulutsantralim API key is not configured in Settings → Verimor.'))
+            raise UserError(self.env._('Bulutsantralim API key is not configured in Settings → Verimor.'))
 
         destination = _normalize_phone(self.mobile or self.phone or '')
         if not destination:
             raise UserError(
-                _('No valid Turkish mobile number found on partner %s.') % self.name
+                self.env._('No valid Turkish mobile number found on partner %s.') % (self.name,)
             )
 
         if self.iys_call_consent == 'RET':
             raise UserError(
-                _('Partner %s has rejected IYS call consent (ARAMA). Outgoing call blocked.')
-                % self.name
+                self.env._('Partner %s has rejected IYS call consent (ARAMA). Outgoing call blocked.')
+                % (self.name,)
             )
 
         url = 'https://pbx.verimor.com.tr/v2/call.json'
@@ -222,15 +222,15 @@ class ResPartner(models.Model):
                     'type': 'ir.actions.client',
                     'tag': 'display_notification',
                     'params': {
-                        'title': _('Call Initiated'),
-                        'message': _('Call to %s is being connected.') % self.name,
+                        'title': self.env._('Call Initiated'),
+                        'message': self.env._('Call to %s is being connected.') % (self.name,),
                         'type': 'success',
                         'sticky': False,
                     },
                 }
             else:
                 raise UserError(
-                    _('Bulutsantralim call failed (HTTP %s): %s') % (resp.status_code, resp.text)
+                    self.env._('Bulutsantralim call failed (HTTP %(code)s): %(text)s') % {'code': resp.status_code, 'text': resp.text}
                 )
         except requests.RequestException as exc:
-            raise UserError(_('Bulutsantralim API error: %s') % str(exc)) from exc
+            raise UserError(self.env._('Bulutsantralim API error: %s') % (str(exc),)) from exc
