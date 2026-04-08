@@ -200,13 +200,12 @@ class ResPartner(models.Model):
         destination = _normalize_phone(self.mobile or self.phone or '')
         if not destination:
             raise UserError(
-                self.env._('No valid Turkish mobile number found on partner %s.') % (self.name,)
+                self.env._('No valid Turkish mobile number found on partner %s.', self.name)
             )
 
         if self.iys_call_consent == 'RET':
             raise UserError(
-                self.env._('Partner %s has rejected IYS call consent (ARAMA). Outgoing call blocked.')
-                % (self.name,)
+                self.env._('Partner %s has rejected IYS call consent (ARAMA). Outgoing call blocked.', self.name)
             )
 
         url = 'https://pbx.verimor.com.tr/v2/call.json'
@@ -223,14 +222,14 @@ class ResPartner(models.Model):
                     'tag': 'display_notification',
                     'params': {
                         'title': self.env._('Call Initiated'),
-                        'message': self.env._('Call to %s is being connected.') % (self.name,),
+                        'message': self.env._('Call to %s is being connected.', self.name),
                         'type': 'success',
                         'sticky': False,
                     },
                 }
             else:
                 raise UserError(
-                    self.env._('Bulutsantralim call failed (HTTP %(code)s): %(text)s') % {'code': resp.status_code, 'text': resp.text}
+                    self.env._('Bulutsantralim call failed (HTTP %s): %s', resp.status_code, resp.text)
                 )
         except requests.RequestException as exc:
-            raise UserError(self.env._('Bulutsantralim API error: %s') % (str(exc),)) from exc
+            raise UserError(self.env._('Bulutsantralim API error: %s', str(exc))) from exc
