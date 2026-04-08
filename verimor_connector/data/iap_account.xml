@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <data>
+        <!--
+            Ensure an iap.account record exists for service_name='sms'.
+            This satisfies Odoo's IAP account lookup even when we are routing
+            SMS through Verimor's own API (the lookup still happens in some
+            internal checks). The account token can remain empty; Verimor does
+            not use IAP tokens.
+        -->
+        <record id="iap_account_verimor_sms" model="iap.account">
+            <field name="service_name">sms</field>
+            <field name="account_token"></field>
+        </record>
+    </data>
+</odoo>

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- ┌─────────────────────────────────────────────────────────────────┐ -->
+        <!-- │  res.partner form – IYS tab + click-to-call button             │ -->
+        <!-- └─────────────────────────────────────────────────────────────────┘ -->
+
+        <record id="view_partner_form_verimor" model="ir.ui.view">
+            <field name="name">res.partner.form.verimor</field>
+            <field name="model">res.partner</field>
+            <field name="inherit_id" ref="base.view_partner_form"/>
+            <field name="arch" type="xml">
+
+                <!-- Click-to-call button next to the mobile field -->
+                <xpath expr="//field[@name='mobile']" position="after">
+                    <button name="action_verimor_click_to_call"
+                            type="object"
+                            class="btn btn-sm btn-secondary"
+                            string="📞 Call"
+                            title="Click-to-call via Bulutsantralim"
+                            icon="fa-phone"
+                            invisible="not mobile"/>
+                </xpath>
+
+                <!-- IYS consent tab appended after the last notebook page -->
+                <xpath expr="//notebook" position="inside">
+                    <page name="verimor_iys" string="IYS Consent">
+                        <group>
+                            <group string="Consent Status">
+                                <field name="iys_sms_consent"
+                                       widget="radio"
+                                       string="SMS (MESAJ)"/>
+                                <field name="iys_call_consent"
+                                       widget="radio"
+                                       string="Voice Call (ARAMA)"/>
+                                <field name="iys_email_consent"
+                                       widget="radio"
+                                       string="E-Mail (EPOSTA)"/>
+                            </group>
+                            <group string="Audit">
+                                <field name="iys_consent_date"/>
+                                <field name="iys_last_push_date" readonly="1"/>
+                                <field name="verimor_mobile" readonly="1"/>
+                            </group>
+                        </group>
+                    </page>
+                </xpath>
+
+            </field>
+        </record>
+
+    </data>
+</odoo>

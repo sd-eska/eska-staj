@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- ┌─────────────────────────────────────────────────────────────────┐ -->
+        <!-- │  verimor.call.log  – List, Form & Action                       │ -->
+        <!-- └─────────────────────────────────────────────────────────────────┘ -->
+
+        <!-- List view -->
+        <record id="view_verimor_call_log_list" model="ir.ui.view">
+            <field name="name">verimor.call.log.list</field>
+            <field name="model">verimor.call.log</field>
+            <field name="arch" type="xml">
+                <list string="Call Logs" decoration-danger="event_type == 'MISSED'"
+                      decoration-success="event_type == 'ANSWERED'">
+                    <field name="call_time"/>
+                    <field name="event_type"/>
+                    <field name="caller_number"/>
+                    <field name="called_number"/>
+                    <field name="partner_id" optional="show"/>
+                    <field name="duration" optional="show" string="Duration (s)"/>
+                    <field name="iys_call_consent" optional="show"/>
+                    <field name="hangup_cause" optional="hide"/>
+                    <field name="call_uuid" optional="hide"/>
+                </list>
+            </field>
+        </record>
+
+        <!-- Form view -->
+        <record id="view_verimor_call_log_form" model="ir.ui.view">
+            <field name="name">verimor.call.log.form</field>
+            <field name="model">verimor.call.log</field>
+            <field name="arch" type="xml">
+                <form string="Call Log">
+                    <sheet>
+                        <div class="oe_title">
+                            <h1>
+                                <field name="caller_number" readonly="1"/>
+                            </h1>
+                        </div>
+                        <group>
+                            <group string="Call Details">
+                                <field name="call_uuid" readonly="1"/>
+                                <field name="event_type" readonly="1"/>
+                                <field name="call_time" readonly="1"/>
+                                <field name="duration" readonly="1"/>
+                                <field name="hangup_cause" readonly="1"/>
+                                <field name="called_number" readonly="1"/>
+                            </group>
+                            <group string="Partner">
+                                <field name="partner_id"/>
+                                <field name="iys_call_consent" readonly="1"/>
+                            </group>
+                        </group>
+                        <group string="Raw Payload">
+                            <field name="raw_payload" readonly="1" widget="text" nolabel="1"
+                                   colspan="2"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <!-- Search view -->
+        <record id="view_verimor_call_log_search" model="ir.ui.view">
+            <field name="name">verimor.call.log.search</field>
+            <field name="model">verimor.call.log</field>
+            <field name="arch" type="xml">
+                <search string="Search Call Logs">
+                    <field name="caller_number" string="Caller"/>
+                    <field name="partner_id"/>
+                    <filter name="incoming" string="Incoming" domain="[('event_type','=','INCOMING')]"/>
+                    <filter name="answered" string="Answered" domain="[('event_type','=','ANSWERED')]"/>
+                    <filter name="missed"   string="Missed"   domain="[('event_type','=','MISSED')]"/>
+                    <filter name="today"    string="Today"
+                            domain="[('call_time','&gt;=', datetime.datetime.combine(context_today(), datetime.time(0,0,0)))]"/>
+                    <separator/>
+                    <group expand="0" string="Group By">
+                        <filter name="group_by_event" string="Event Type"
+                                context="{'group_by': 'event_type'}"/>
+                        <filter name="group_by_partner" string="Partner"
+                                context="{'group_by': 'partner_id'}"/>
+                        <filter name="group_by_date" string="Date"
+                                context="{'group_by': 'call_time:day'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <!-- Window action -->
+        <record id="action_verimor_call_log" model="ir.actions.act_window">
+            <field name="name">Call Logs</field>
+            <field name="res_model">verimor.call.log</field>
+            <field name="view_mode">list,form</field>
+            <field name="search_view_id" ref="view_verimor_call_log_search"/>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    No call logs yet.
+                </p>
+                <p>
+                    Call events received from Bulutsantralim webhooks will appear here.
+                    Make sure the webhook URL is registered in your Bulutsantralim panel.
+                </p>
+            </field>
+        </record>
+
+        <!-- Menu items -->
+        <menuitem id="menu_verimor_root"
+                  name="Verimor"
+                  sequence="90"
+                  web_icon="verimor_connector,static/description/icon.png"/>
+
+        <menuitem id="menu_verimor_call_logs"
+                  name="Call Logs"
+                  parent="menu_verimor_root"
+                  action="action_verimor_call_log"
+                  sequence="10"/>
+
+    </data>
+</odoo>
