@@ -29,7 +29,6 @@
     ],
     'data': [
         'security/ir.model.access.csv',
-        'data/iap_account.xml',
         'views/res_config_settings_views.xml',
         'views/res_partner_views.xml',
         'views/verimor_call_log_views.xml',
