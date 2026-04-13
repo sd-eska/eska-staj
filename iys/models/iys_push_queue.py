@@ -113,7 +113,14 @@ class IysPushQueue(models.Model):
         )
 
         for item in pending:
-            item._send_one(account)
+            try:
+                with self.env.cr.savepoint():
+                    item._send_one(account)
+            except Exception as exc:  # noqa: BLE001
+                _logger.exception(
+                    'iys.push.queue: unexpected error processing item id=%d – %s',
+                    item.id, exc,
+                )
 
     def _send_one(self, account):
         """

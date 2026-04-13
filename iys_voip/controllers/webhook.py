@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
+import datetime
 import json
 import logging
 
-from odoo import http
+from odoo import fields, http
 from odoo.http import request
 
 _logger = logging.getLogger(__name__)
@@ -155,13 +156,8 @@ class BulutsantralimWebhook(http.Controller):
             'direction': direction,
             'state': 'calling',
             'partner_id': partner.id if partner else False,
+            'bulutsantralim_call_id': call_id_ext,
         })
-
-        # Çağrı bilgisi: call_id ↔ voip.call.id eşlemesini session'da tut
-        # (CALL_END geldiğinde aynı kaydı güncellemek için).
-        env['ir.config_parameter'].sudo().set_param(
-            f'iys_voip.active_call.{call_id_ext}', str(voip_call.id)
-        )
 
         # Sorumlu kullanıcıyı bul (dahili numara -> res.users)
         extension = payload.get('callee_extension') or payload.get('callee') or ''
@@ -212,18 +208,11 @@ class BulutsantralimWebhook(http.Controller):
         write_vals = {'state': new_state}
         if duration is not None and new_state == 'terminated':
             # start_date'i retroaktif hesapla (end_date - duration)
-            import datetime
-            write_vals['end_date'] = fields_now = __import__(
-                'odoo.fields', fromlist=['Datetime']
-            ).Datetime.now()
-            write_vals['start_date'] = fields_now - datetime.timedelta(seconds=int(duration))
+            now = fields.Datetime.now()
+            write_vals['end_date'] = now
+            write_vals['start_date'] = now - datetime.timedelta(seconds=int(duration))
 
         voip_call.write(write_vals)
-
-        # ir.config_parameter temizliği
-        env['ir.config_parameter'].sudo().set_param(
-            f'iys_voip.active_call.{call_id_ext}', False
-        )
 
         _logger.info(
             'iys_voip webhook: CALL_END – voip.call id=%d state=%s (hangup_cause=%s, duration=%ss).',
@@ -328,20 +317,13 @@ class BulutsantralimWebhook(http.Controller):
         Bulutsantralim call_id string'ini kullanarak daha önce oluşturulan
         voip.call kaydını bulur.
 
-        ir.config_parameter'da 'iys_voip.active_call.<call_id>' → voip.call.id
-        şeklinde tutulur.
+        voip.call.bulutsantralim_call_id alanı üzerinden arama yapılır.
         """
         if not call_id_ext:
             return None
-        param_key = f'iys_voip.active_call.{call_id_ext}'
-        voip_call_id_str = env['ir.config_parameter'].sudo().get_param(param_key)
-        if not voip_call_id_str:
-            return None
-        try:
-            voip_call_id = int(voip_call_id_str)
-        except (TypeError, ValueError):
-            return None
-        return env['voip.call'].browse(voip_call_id).exists()
+        return env['voip.call'].search(
+            [('bulutsantralim_call_id', '=', call_id_ext)], limit=1
+        ) or None
 
     @staticmethod
     def _find_user_by_extension(env, extension):

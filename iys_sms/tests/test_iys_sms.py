@@ -15,7 +15,7 @@ class TestIysSms(TransactionCase):
         # Create a test IAP account for Verimor SMS
         cls.iap_account = cls.env['iap.account'].create({
             'name': 'Test IYS SMS Verimor',
-            'provider': 'iys_sms_verimor',
+            'provider': 'sms_verimor',
             'sms_username': 'testuser',
             'sms_password': 'testpass',
             'sms_source_addr': 'TESTFIRMA',

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import logging
-from odoo import models
+from odoo import fields, models
 from odoo.exceptions import UserError
 from odoo.addons.iys.models.res_partner import _normalize_phone
 
@@ -15,6 +15,15 @@ class VoipCall(models.Model):
     Odoo entry point for the softphone's "dial" action).
     """
     _inherit = 'voip.call'
+
+    bulutsantralim_call_id = fields.Char(
+        string='Bulutsantralim Call ID',
+        index=True,
+        readonly=True,
+        copy=False,
+        help='External call identifier received from the Bulutsantralim PBX webhook.'
+        ' Used to correlate CALL_START and CALL_END events.',
+    )
 
     def create_and_format(self, res_id=None, res_model=None, **kwargs):
         """

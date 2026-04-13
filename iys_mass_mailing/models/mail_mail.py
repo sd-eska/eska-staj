@@ -19,6 +19,7 @@ class MailMail(models.Model):
         Override _send() to block commercial e-mail for IYS EPOSTA-rejected recipients.
 
         Non-commercial (is_commercial=False) e-mails bypass this check entirely.
+        Covers both partner-linked recipients (recipient_ids) and raw email_to strings.
         """
         Consent = self.env['iys.consent']
 
@@ -26,28 +27,41 @@ class MailMail(models.Model):
             if not mail.is_commercial:
                 continue
 
+            # --- partner-linked recipients ---
             blocked_partners = mail.recipient_ids.filtered(
                 lambda p: Consent._is_blocked(p.email or '', 'EPOSTA')
             )
-            if not blocked_partners:
-                continue
+            if blocked_partners:
+                allowed_partners = mail.recipient_ids - blocked_partners
+                _logger.info(
+                    'iys_mass_mailing: commercial mail %s – blocked %d partner recipient(s), allowed %d',
+                    mail.id, len(blocked_partners), len(allowed_partners),
+                )
+                mail.write({'recipient_ids': [(3, p.id) for p in blocked_partners]})
 
-            allowed_partners = mail.recipient_ids - blocked_partners
-            _logger.info(
-                'iys_mass_mailing: commercial mail %s – blocked %d recipient(s), allowed %d',
-                mail.id, len(blocked_partners), len(allowed_partners),
-            )
+            # --- raw email_to string (non-partner addresses) ---
+            if mail.email_to:
+                raw_addresses = [a.strip() for a in mail.email_to.split(',') if a.strip()]
+                allowed_addresses = [
+                    a for a in raw_addresses
+                    if not Consent._is_blocked(a.lower(), 'EPOSTA')
+                ]
+                blocked_count = len(raw_addresses) - len(allowed_addresses)
+                if blocked_count:
+                    _logger.info(
+                        'iys_mass_mailing: commercial mail %s – blocked %d email_to address(es)',
+                        mail.id, blocked_count,
+                    )
+                    mail.write({'email_to': ', '.join(allowed_addresses) if allowed_addresses else False})
 
-            if not allowed_partners and not mail.email_to:
+            # If ALL recipients were removed, cancel the mail
+            if not mail.recipient_ids and not mail.email_to:
                 mail.write({
                     'state': 'cancel',
                     'failure_reason': self.env._(
                         'All recipients have rejected IYS e-mail consent. Commercial e-mail blocked.'
                     ),
                 })
-                continue
-
-            mail.write({'recipient_ids': [(3, p.id) for p in blocked_partners]})
 
         remaining = self.filtered(lambda m: m.state == 'outgoing')
         if remaining:

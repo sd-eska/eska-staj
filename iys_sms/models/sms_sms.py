@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import logging
 from odoo import fields, models
+from odoo.addons.iys.models.res_partner import _normalize_phone
 
 _logger = logging.getLogger(__name__)
 
@@ -33,7 +34,6 @@ class SmsSms(models.Model):
         for sms in self:
             number = sms.number or ''
             # Normalise to E.164 for lookup
-            from odoo.addons.iys.models.res_partner import _normalize_phone
             normalized = _normalize_phone(number) or number
 
             if Consent._is_blocked(normalized, 'MESAJ'):

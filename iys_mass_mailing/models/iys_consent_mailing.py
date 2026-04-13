@@ -43,19 +43,6 @@ class MailBlacklist(models.Model):
                     Consent._add(email, 'EPOSTA', 'RET')
         return res
 
-    def action_add(self, email):
-        """
-        Override add() hook (called by Odoo mass mailing when user unsubscribes).
-        Syncs to IYS consent store.
-        """
-        result = super().action_add(email)
-        email_clean = (email or '').strip().lower()
-        if email_clean:
-            self.env['iys.consent']._add(email_clean, 'EPOSTA', 'RET')
-            _logger.debug(
-                'iys_mass_mailing: unsubscribe → iys.consent RET for %s', email_clean
-            )
-        return result
 
     def _add(self, emails, message=None):
         """

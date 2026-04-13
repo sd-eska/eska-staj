@@ -44,7 +44,17 @@ class IapAccount(models.Model):
                 timeout=10,
             )
             if resp.status_code == 200:
-                raise UserError(self.env._('Verimor SMS Balance: %s', resp.text.strip()))
+                balance_text = resp.text.strip()
+                return {
+                    'type': 'ir.actions.client',
+                    'tag': 'display_notification',
+                    'params': {
+                        'title': self.env._('Verimor SMS Balance'),
+                        'message': balance_text,
+                        'type': 'success',
+                        'sticky': False,
+                    },
+                }
             else:
                 raise UserError(
                     self.env._('Balance check failed (HTTP %s): %s', resp.status_code, resp.text)
