@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- IAP Account form – IYS Verimor credentials section -->
+        <record id="view_iap_account_form_iys" model="ir.ui.view">
+            <field name="name">iap.account.form.iys</field>
+            <field name="model">iap.account</field>
+            <field name="inherit_id" ref="iap.iap_account_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//sheet" position="inside">
+                    <group string="IYS Verimor Credentials"
+                           invisible="provider != 'iys_verimor'">
+                        <field name="iys_username" placeholder="908501234567"/>
+                        <field name="iys_password" password="True"/>
+                        <field name="iys_source_addr" placeholder="FIRMAADI"/>
+                    </group>
+                </xpath>
+            </field>
+        </record>
+
+    </data>
+</odoo>

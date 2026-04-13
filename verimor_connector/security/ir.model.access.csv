@@ -1,3 +1,0 @@
-id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_verimor_call_log_user,verimor.call.log (user),model_verimor_call_log,base.group_user,1,0,0,0
-access_verimor_call_log_manager,verimor.call.log (manager),model_verimor_call_log,base.group_system,1,1,1,1

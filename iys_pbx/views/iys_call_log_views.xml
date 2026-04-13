@@ -2,16 +2,13 @@
 <odoo>
     <data>
 
-        <!-- ┌─────────────────────────────────────────────────────────────────┐ -->
-        <!-- │  verimor.call.log  – List, Form & Action                       │ -->
-        <!-- └─────────────────────────────────────────────────────────────────┘ -->
-
         <!-- List view -->
-        <record id="view_verimor_call_log_list" model="ir.ui.view">
-            <field name="name">verimor.call.log.list</field>
-            <field name="model">verimor.call.log</field>
+        <record id="view_iys_call_log_list" model="ir.ui.view">
+            <field name="name">iys.call.log.list</field>
+            <field name="model">iys.call.log</field>
             <field name="arch" type="xml">
-                <list string="Call Logs" decoration-danger="event_type == 'MISSED'"
+                <list string="Call Logs"
+                      decoration-danger="event_type == 'MISSED'"
                       decoration-success="event_type == 'ANSWERED'">
                     <field name="call_time"/>
                     <field name="event_type"/>
@@ -27,9 +24,9 @@
         </record>
 
         <!-- Form view -->
-        <record id="view_verimor_call_log_form" model="ir.ui.view">
-            <field name="name">verimor.call.log.form</field>
-            <field name="model">verimor.call.log</field>
+        <record id="view_iys_call_log_form" model="ir.ui.view">
+            <field name="name">iys.call.log.form</field>
+            <field name="model">iys.call.log</field>
             <field name="arch" type="xml">
                 <form string="Call Log">
                     <sheet>
@@ -53,8 +50,8 @@
                             </group>
                         </group>
                         <group string="Raw Payload">
-                            <field name="raw_payload" readonly="1" widget="text" nolabel="1"
-                                   colspan="2"/>
+                            <field name="raw_payload" readonly="1" widget="text"
+                                   nolabel="1" colspan="2"/>
                         </group>
                     </sheet>
                 </form>
@@ -62,17 +59,20 @@
         </record>
 
         <!-- Search view -->
-        <record id="view_verimor_call_log_search" model="ir.ui.view">
-            <field name="name">verimor.call.log.search</field>
-            <field name="model">verimor.call.log</field>
+        <record id="view_iys_call_log_search" model="ir.ui.view">
+            <field name="name">iys.call.log.search</field>
+            <field name="model">iys.call.log</field>
             <field name="arch" type="xml">
                 <search string="Search Call Logs">
                     <field name="caller_number" string="Caller"/>
                     <field name="partner_id"/>
-                    <filter name="incoming" string="Incoming" domain="[('event_type','=','INCOMING')]"/>
-                    <filter name="answered" string="Answered" domain="[('event_type','=','ANSWERED')]"/>
-                    <filter name="missed"   string="Missed"   domain="[('event_type','=','MISSED')]"/>
-                    <filter name="today"    string="Today"
+                    <filter name="incoming" string="Incoming"
+                            domain="[('event_type','=','INCOMING')]"/>
+                    <filter name="answered" string="Answered"
+                            domain="[('event_type','=','ANSWERED')]"/>
+                    <filter name="missed"   string="Missed"
+                            domain="[('event_type','=','MISSED')]"/>
+                    <filter name="today" string="Today"
                             domain="[('call_time','&gt;=', datetime.datetime.combine(context_today(), datetime.time(0,0,0)))]"/>
                     <separator/>
                     <group expand="0" string="Group By">
@@ -88,11 +88,11 @@
         </record>
 
         <!-- Window action -->
-        <record id="action_verimor_call_log" model="ir.actions.act_window">
+        <record id="action_iys_call_log" model="ir.actions.act_window">
             <field name="name">Call Logs</field>
-            <field name="res_model">verimor.call.log</field>
+            <field name="res_model">iys.call.log</field>
             <field name="view_mode">list,form</field>
-            <field name="search_view_id" ref="view_verimor_call_log_search"/>
+            <field name="search_view_id" ref="view_iys_call_log_search"/>
             <field name="help" type="html">
                 <p class="o_view_nocontent_smiling_face">
                     No call logs yet.
@@ -105,15 +105,14 @@
         </record>
 
         <!-- Menu items -->
-        <menuitem id="menu_verimor_root"
-                  name="Verimor"
-                  sequence="90"
-                  web_icon="verimor_connector,static/description/icon.png"/>
+        <menuitem id="menu_iys_pbx_root"
+                  name="IYS PBX"
+                  sequence="90"/>
 
-        <menuitem id="menu_verimor_call_logs"
+        <menuitem id="menu_iys_call_logs"
                   name="Call Logs"
-                  parent="menu_verimor_root"
-                  action="action_verimor_call_log"
+                  parent="menu_iys_pbx_root"
+                  action="action_iys_call_log"
                   sequence="10"/>
 
     </data>

@@ -2,30 +2,16 @@
 <odoo>
     <data>
 
-        <!-- ┌─────────────────────────────────────────────────────────────────┐ -->
-        <!-- │  res.partner form – IYS tab + click-to-call button             │ -->
-        <!-- └─────────────────────────────────────────────────────────────────┘ -->
-
-        <record id="view_partner_form_verimor" model="ir.ui.view">
-            <field name="name">res.partner.form.verimor</field>
+        <!-- res.partner form – IYS Consent tab -->
+        <record id="view_partner_form_iys" model="ir.ui.view">
+            <field name="name">res.partner.form.iys</field>
             <field name="model">res.partner</field>
             <field name="inherit_id" ref="base.view_partner_form"/>
             <field name="arch" type="xml">
 
-                <!-- Click-to-call button next to the mobile field -->
-                <xpath expr="//field[@name='mobile']" position="after">
-                    <button name="action_verimor_click_to_call"
-                            type="object"
-                            class="btn btn-sm btn-secondary"
-                            string="📞 Call"
-                            title="Click-to-call via Bulutsantralim"
-                            icon="fa-phone"
-                            invisible="not mobile"/>
-                </xpath>
-
-                <!-- IYS consent tab appended after the last notebook page -->
+                <!-- IYS consent tab in the notebook -->
                 <xpath expr="//notebook" position="inside">
-                    <page name="verimor_iys" string="IYS Consent">
+                    <page name="iys_consent" string="IYS Consent">
                         <group>
                             <group string="Consent Status">
                                 <field name="iys_sms_consent"
