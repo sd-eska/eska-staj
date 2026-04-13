@@ -10,6 +10,7 @@ _logger = logging.getLogger(__name__)
 _IYS_PUSH_ENDPOINT = 'https://sms.verimor.com.tr/v2/iys_consents.json'
 
 MAX_RETRIES = 3
+BATCH_SIZE = 200   # max items processed per cron run
 REQUEST_TIMEOUT = 15  # seconds
 
 
@@ -104,9 +105,12 @@ class IysPushQueue(models.Model):
         pending = self.search([
             ('state', '=', 'pending'),
             ('next_retry', '<=', fields.Datetime.now()),
-        ])
+        ], limit=BATCH_SIZE)
 
-        _logger.info('iys.push.queue: processing %d item(s).', len(pending))
+        _logger.info(
+            'iys.push.queue: processing %d item(s) (batch limit=%d).',
+            len(pending), BATCH_SIZE,
+        )
 
         for item in pending:
             item._send_one(account)
