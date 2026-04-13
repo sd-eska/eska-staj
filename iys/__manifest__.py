@@ -14,6 +14,7 @@
     ],
     'data': [
         'security/ir.model.access.csv',
+        'data/ir_cron.xml',
         'views/iap_account_views.xml',
         'views/res_partner_views.xml',
     ],

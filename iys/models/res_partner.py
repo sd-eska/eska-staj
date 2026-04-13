@@ -70,10 +70,24 @@ class ResPartner(models.Model):
         iys_fields = {
             'iys_sms_consent', 'iys_call_consent', 'iys_email_consent', 'iys_consent_date',
         }
-        if iys_fields & set(vals.keys()):
+        if iys_fields & set(vals.keys()) and not self.env.context.get('iys_skip_push'):
             self._sync_iys_consent_records()
             self._push_iys_consents()
         return res
+
+    def _apply_iys_pull(self, consent_type, status):
+        """
+        Hook called by iys.consent._propagate_to_partners() when the IYS pull
+        detects a status change from the Verimor API.
+
+        Each channel module overrides this to update its own consent field:
+          - iys_sms        → 'MESAJ' → iys_sms_consent
+          - iys_mass_mailing → 'EPOSTA' → iys_email_consent
+          - iys_voip       → 'ARAMA' → iys_call_consent
+
+        Base implementation is a no-op; channel modules call super() and extend.
+        """
+        return
 
     def _sync_iys_consent_records(self):
         """Sync consent items from all channel modules into the iys.consent store."""

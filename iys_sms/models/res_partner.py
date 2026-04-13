@@ -16,3 +16,9 @@ class ResPartner(models.Model):
         items = super()._iys_consent_items()
         items.append((self.verimor_mobile, 'MESAJ', self.iys_sms_consent))
         return items
+
+    def _apply_iys_pull(self, consent_type, status):
+        """IYS pull: update SMS consent field when Verimor reports a change."""
+        if consent_type == 'MESAJ':
+            self.with_context(iys_skip_push=True).write({'iys_sms_consent': status})
+        return super()._apply_iys_pull(consent_type, status)
