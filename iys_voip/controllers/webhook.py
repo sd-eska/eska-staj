@@ -271,23 +271,41 @@ class BulutsantralimWebhook(http.Controller):
         """
         İstekteki X-Webhook-Secret başlığını ir.config_parameter'daki değerle karşılaştırır.
 
-        :return: True → istek kabul edilebilir | False → reddet
+        - Secret tanımlıysa: birebir eşleşme zorunlu, aksi hâlde 403.
+        - Secret tanımlı değilse:
+            - Odoo --dev / debug modunda: uyarı logla, isteği kabul et (geliştirme kolaylığı).
+            - Production modunda: 403 döndür.
+
+        Odoo'da debug modu: tools.config['dev_mode'] listesi boş değilse aktiftir.
+
+        :return: True → isteği kabul et | False → reddet (403)
         """
         env = req.env(su=True)
         expected = env['ir.config_parameter'].sudo().get_param('iys_voip.webhook_secret')
 
         if not expected:
-            _logger.warning(
-                'iys_voip webhook: iys_voip.webhook_secret not set – accepting request without verification. '
-                'Configure this in Settings → Technical → Parameters → System Parameters.'
+            from odoo.tools import config as odoo_config
+            dev_mode = bool(odoo_config.get('dev_mode'))
+            if dev_mode:
+                _logger.warning(
+                    'iys_voip webhook: iys_voip.webhook_secret not set – '
+                    'accepting request in dev mode. '
+                    'Set this param before deploying to production.'
+                )
+                return True
+            _logger.error(
+                'iys_voip webhook: iys_voip.webhook_secret not configured – '
+                'request rejected. '
+                'Go to Settings → Technical → System Parameters and add '
+                '"iys_voip.webhook_secret" with the secret defined in Bulutsantralim panel.'
             )
-            return True  # geliştirme kolaylığı için geçici tolerans
+            return False
 
         received = req.httprequest.headers.get('X-Webhook-Secret', '')
         if received != expected:
             _logger.warning(
                 'iys_voip webhook: secret mismatch – request rejected '
-                '(received=%r, expected=<redacted>).', received[:8] + '…' if received else ''
+                '(received prefix=%r).', received[:8] + '…' if received else '<empty>'
             )
             return False
 
