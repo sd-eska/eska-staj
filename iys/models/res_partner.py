@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import logging
 import re
-import requests
 from odoo import api, fields, models
 
 _logger = logging.getLogger(__name__)
@@ -10,8 +9,6 @@ _TR_MOBILE_RE = re.compile(
     r'^(?:\+?90|0)?'
     r'(5\d{9})$'
 )
-
-_IYS_ENDPOINT = 'https://sms.verimor.com.tr/v2/iys_consents.json'
 
 
 def _normalize_phone(phone):
@@ -107,7 +104,14 @@ class ResPartner(models.Model):
                     Consent._remove(recipient, c_type)
 
     def _push_iys_consents(self):
-        """Push consent updates to the Verimor IYS API."""
+        """
+        Enqueue consent updates for async delivery to the Verimor IYS API.
+
+        Instead of blocking the user's browser with an HTTP call, each
+        partner's payload is added to iys.push.queue. A cron job (every
+        5 minutes) picks up pending items and calls Verimor, retrying
+        on failure with exponential backoff.
+        """
         account = self.env['iap.account'].search(
             [('provider', '=', 'iys_verimor')], limit=1
         )
@@ -115,27 +119,18 @@ class ResPartner(models.Model):
             _logger.warning('iys: IYS push skipped – iap.account credentials not configured.')
             return
 
+        Queue = self.env['iys.push.queue']
         for partner in self:
             consents = partner._build_iys_consents()
             if not consents:
                 continue
             payload = {
-                'username': account.iys_username,
-                'password': account.iys_password,
                 'source_addr': account.iys_source_addr or '',
                 'consents': consents,
+                # username/password injected fresh at send-time (in case creds are updated)
             }
-            try:
-                resp = requests.post(_IYS_ENDPOINT, json=payload, timeout=15)
-                if resp.status_code == 200:
-                    partner.sudo().write({'iys_last_push_date': fields.Datetime.now()})
-                else:
-                    _logger.error(
-                        'iys: IYS push failed – HTTP %s: %s',
-                        resp.status_code, resp.text,
-                    )
-            except requests.RequestException as exc:
-                _logger.exception('iys: IYS push network error: %s', exc)
+            Queue._enqueue(partner, payload)
+            _logger.debug('iys: queued IYS push for partner %s.', partner.name)
 
     def _build_iys_consents(self):
         """

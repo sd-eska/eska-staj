@@ -17,5 +17,6 @@
         'data/ir_cron.xml',
         'views/iap_account_views.xml',
         'views/res_partner_views.xml',
+        'views/iys_push_queue_views.xml',
     ],
 }
