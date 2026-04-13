@@ -2,28 +2,17 @@
 <odoo>
     <data>
 
-        <!-- res.partner form – IYS Consent tab -->
+        <!-- res.partner form — audit fields only (consent fields added by channel modules) -->
         <record id="view_partner_form_iys" model="ir.ui.view">
             <field name="name">res.partner.form.iys</field>
             <field name="model">res.partner</field>
             <field name="inherit_id" ref="base.view_partner_form"/>
             <field name="arch" type="xml">
 
-                <!-- IYS consent tab in the notebook -->
+                <!-- IYS tab skeleton — channel modules add their rows via XPath into this page -->
                 <xpath expr="//notebook" position="inside">
                     <page name="iys_consent" string="IYS Consent">
                         <group>
-                            <group string="Consent Status">
-                                <field name="iys_sms_consent"
-                                       widget="radio"
-                                       string="SMS (MESAJ)"/>
-                                <field name="iys_call_consent"
-                                       widget="radio"
-                                       string="Voice Call (ARAMA)"/>
-                                <field name="iys_email_consent"
-                                       widget="radio"
-                                       string="E-Mail (EPOSTA)"/>
-                            </group>
                             <group string="Audit">
                                 <field name="iys_consent_date"/>
                                 <field name="iys_last_push_date" readonly="1"/>

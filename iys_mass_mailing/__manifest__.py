@@ -11,5 +11,7 @@
         'iys',
         'mass_mailing',
     ],
-    'data': [],
+    'data': [
+        'views/res_partner_views.xml',
+    ],
 }

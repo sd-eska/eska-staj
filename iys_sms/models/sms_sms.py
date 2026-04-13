@@ -11,6 +11,8 @@ _CTX_TRANSACTIONAL = 'iys_transactional_sms'
 class SmsSms(models.Model):
     _inherit = 'sms.sms'
 
+
+    #override _send method through odoo native sms module
     def _send(self, unlink_failed=False, unlink_sent=True, raise_exception=False):
         """
         Override _send() to block outgoing SMS for IYS-rejected recipients.

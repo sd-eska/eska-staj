@@ -9,11 +9,16 @@ class IapAccount(models.Model):
         selection_add=[('iys_verimor', 'IYS Verimor')],
         ondelete={'iys_verimor': 'cascade'},
     )
+
     iys_username = fields.Char(
         string='IYS Username',
         help='Verimor account username used for IYS consent push (e.g. 908501234567)',
     )
-    iys_password = fields.Char(string='IYS Password')
+
+    iys_password = fields.Char(
+        string='IYS Password',
+    )
+
     iys_source_addr = fields.Char(
         string='IYS Sender ID (Başlık)',
         help='Approved sender name registered on Verimor OIM panel',

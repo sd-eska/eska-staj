@@ -28,6 +28,7 @@ class IysConsent(models.Model):
         index=True,
         help='E.164 phone number (905XXXXXXXXX) or e-mail address',
     )
+
     consent_type = fields.Selection(
         selection=[
             ('MESAJ', 'SMS (MESAJ)'),
@@ -38,6 +39,7 @@ class IysConsent(models.Model):
         required=True,
         index=True,
     )
+
     status = fields.Selection(
         selection=[
             ('ONAY', 'Approved'),
@@ -46,21 +48,28 @@ class IysConsent(models.Model):
         string='Status',
         required=True,
     )
+
     active = fields.Boolean(
         default=True,
         help='False means the recipient is blacklisted for this consent type.',
     )
+
     source = fields.Char(
         string='Source',
         default='HS_WEB',
         help='IYS source code (HS_WEB, HS_CAGRI_MERKEZI, etc.)',
     )
+
     recipient_type = fields.Selection(
         selection=[('BIREYSEL', 'Individual'), ('TACIR', 'Merchant')],
         string='Recipient Type',
         default='BIREYSEL',
     )
-    consent_date = fields.Datetime(string='Consent Date', default=fields.Datetime.now)
+
+    consent_date = fields.Datetime(
+        string='Consent Date',
+        default=fields.Datetime.now,
+    )
 
     _sql_constraints = [
         (
@@ -146,10 +155,12 @@ class IysConsent(models.Model):
         :return: 'ONAY' | 'RET' | 'pending'
         """
         recipient = (recipient or '').strip().lower() if '@' in (recipient or '') else (recipient or '').strip()
+
         record = self.with_context(active_test=False).search([
             ('recipient', '=', recipient),
             ('consent_type', '=', consent_type),
         ], limit=1)
+        
         if not record:
             return 'pending'
         return record.status

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import logging
 import requests
-from odoo import api, models
+from odoo import models
 from odoo.addons.sms.tools.sms_api import SmsApiBase
 
 _logger = logging.getLogger(__name__)
@@ -10,7 +10,10 @@ _VERIMOR_SMS_ENDPOINT = 'https://sms.verimor.com.tr/v2/send.json'
 
 
 class VerimorSmsApi(SmsApiBase):
-    """Verimor-specific SMS API implementation."""
+    """
+    Pure Verimor SMS transport — sends messages via v2/send.json.
+    No IYS logic here; IYS blocking is in iys_sms/models/sms_sms.py.
+    """
 
     PROVIDER_TO_SMS_FAILURE_TYPE = SmsApiBase.PROVIDER_TO_SMS_FAILURE_TYPE | {
         'server_error': 'sms_server',
@@ -19,7 +22,7 @@ class VerimorSmsApi(SmsApiBase):
 
     def _get_credentials(self):
         account = self.env['iap.account'].search(
-            [('provider', '=', 'iys_sms_verimor')], limit=1
+            [('provider', '=', 'sms_verimor')], limit=1
         )
         if not account:
             return {}
@@ -87,7 +90,7 @@ class ResCompany(models.Model):
     def _get_sms_api_class(self):
         self.ensure_one()
         account = self.env['iap.account'].search(
-            [('provider', '=', 'iys_sms_verimor')], limit=1
+            [('provider', '=', 'sms_verimor')], limit=1
         )
         if account and account.sms_username:
             return VerimorSmsApi

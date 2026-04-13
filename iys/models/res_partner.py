@@ -3,7 +3,6 @@ import logging
 import re
 import requests
 from odoo import api, fields, models
-from odoo.exceptions import UserError
 
 _logger = logging.getLogger(__name__)
 
@@ -29,25 +28,10 @@ def _normalize_phone(phone):
 class ResPartner(models.Model):
     _inherit = 'res.partner'
 
-    iys_sms_consent = fields.Selection(
-        selection=[('ONAY', 'Approved'), ('RET', 'Rejected'), ('pending', 'Pending')],
-        string='IYS SMS Consent (MESAJ)',
-        default='pending',
-        tracking=True,
+    # Consent date and push audit — shared by all channel modules
+    iys_consent_date = fields.Datetime(
+        string='IYS Consent Date',
     )
-    iys_call_consent = fields.Selection(
-        selection=[('ONAY', 'Approved'), ('RET', 'Rejected'), ('pending', 'Pending')],
-        string='IYS Call Consent (ARAMA)',
-        default='pending',
-        tracking=True,
-    )
-    iys_email_consent = fields.Selection(
-        selection=[('ONAY', 'Approved'), ('RET', 'Rejected'), ('pending', 'Pending')],
-        string='IYS Email Consent (EPOSTA)',
-        default='pending',
-        tracking=True,
-    )
-    iys_consent_date = fields.Datetime(string='IYS Consent Date')
     iys_last_push_date = fields.Datetime(string='Last IYS Push', readonly=True)
 
     verimor_mobile = fields.Char(
@@ -64,27 +48,38 @@ class ResPartner(models.Model):
                 or _normalize_phone(partner.phone)
             )
 
+    # ------------------------------------------------------------------ #
+    #  Hooks — each channel module overrides _iys_consent_items()         #
+    # ------------------------------------------------------------------ #
+
+    def _iys_consent_items(self):
+        """
+        Return a list of (recipient, consent_type, status) tuples for this
+        partner. Each channel module (iys_sms, iys_mass_mailing, iys_pbx)
+        must call super() and extend the list with its own consent field.
+
+        Example:
+            items = super()._iys_consent_items()
+            items.append((self.verimor_mobile, 'MESAJ', self.iys_sms_consent))
+            return items
+        """
+        return []
+
     def write(self, vals):
         res = super().write(vals)
-        iys_fields = {'iys_sms_consent', 'iys_call_consent', 'iys_email_consent', 'iys_consent_date'}
+        iys_fields = {
+            'iys_sms_consent', 'iys_call_consent', 'iys_email_consent', 'iys_consent_date',
+        }
         if iys_fields & set(vals.keys()):
             self._sync_iys_consent_records()
             self._push_iys_consents()
         return res
 
     def _sync_iys_consent_records(self):
-        """Sync partner IYS field values into the iys.consent store."""
+        """Sync consent items from all channel modules into the iys.consent store."""
         Consent = self.env['iys.consent']
         for partner in self:
-            mobile = partner.verimor_mobile
-            email = partner.email
-
-            consent_map = [
-                (mobile, 'MESAJ', partner.iys_sms_consent),
-                (mobile, 'ARAMA', partner.iys_call_consent),
-                (email, 'EPOSTA', partner.iys_email_consent),
-            ]
-            for recipient, c_type, status in consent_map:
+            for recipient, c_type, status in partner._iys_consent_items():
                 if not recipient:
                     continue
                 if status in ('ONAY', 'RET'):
@@ -129,7 +124,10 @@ class ResPartner(models.Model):
                 _logger.exception('iys: IYS push network error: %s', exc)
 
     def _build_iys_consents(self):
-        """Build the consents list payload for the Verimor IYS API."""
+        """
+        Build the consents list payload for the Verimor IYS API.
+        Delegates to _iys_consent_items() so each module contributes its own entries.
+        """
         self.ensure_one()
         consents = []
         consent_date = (
@@ -137,21 +135,15 @@ class ResPartner(models.Model):
             if self.iys_consent_date
             else fields.Datetime.to_string(fields.Datetime.now())
         )
-        mobile = self.verimor_mobile
-
-        if mobile and self.iys_sms_consent in ('ONAY', 'RET'):
+        for recipient, c_type, status in self._iys_consent_items():
+            if not recipient or status not in ('ONAY', 'RET'):
+                continue
             consents.append({
-                'type': 'MESAJ', 'source': 'HS_WEB', 'status': self.iys_sms_consent,
-                'recipient_type': 'BIREYSEL', 'consent_date': consent_date, 'recipient': mobile,
-            })
-        if mobile and self.iys_call_consent in ('ONAY', 'RET'):
-            consents.append({
-                'type': 'ARAMA', 'source': 'HS_WEB', 'status': self.iys_call_consent,
-                'recipient_type': 'BIREYSEL', 'consent_date': consent_date, 'recipient': mobile,
-            })
-        if self.email and self.iys_email_consent in ('ONAY', 'RET'):
-            consents.append({
-                'type': 'EPOSTA', 'source': 'HS_WEB', 'status': self.iys_email_consent,
-                'recipient_type': 'BIREYSEL', 'consent_date': consent_date, 'recipient': self.email,
+                'type': c_type,
+                'source': 'HS_WEB',
+                'status': status,
+                'recipient_type': 'BIREYSEL',
+                'consent_date': consent_date,
+                'recipient': recipient,
             })
         return consents

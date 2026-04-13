@@ -8,6 +8,8 @@ __pycache__/
 # Odoo
 *.pyc
 .odoo_*.cfg
+# Enterprise modules (not to be committed to this repo)
+voip/
 
 # IDE / OS
 .idea/
