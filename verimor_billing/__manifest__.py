@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Verimor Billing',
-    'version': '18.0.1.0.0',
+    'version': '17.0.1.0.0',
     'category': 'Accounting/Billing',
     'summary': 'Post-paid billing for Verimor SMS and VoIP usage',
     'description': """

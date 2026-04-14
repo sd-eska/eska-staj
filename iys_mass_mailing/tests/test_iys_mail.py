@@ -50,7 +50,7 @@ class TestIysMail(TransactionCase):
         # We don't actually send via SMTP; just verify it's not cancelled.
         # Patch smtp to avoid real network call.
         from unittest.mock import patch
-        with patch.object(type(mail), '_send_email', return_value=True):
+        with patch('odoo.addons.base.models.ir_mail_server.IrMailServer.send_email', return_value='test-msg-id'):
             mail._send()
 
         self.assertNotEqual(mail.state, 'cancel')
@@ -72,7 +72,7 @@ class TestIysMail(TransactionCase):
         mail = self._make_mail([onay, ret], is_commercial=True)
 
         from unittest.mock import patch
-        with patch.object(type(mail), '_send_email', return_value=True):
+        with patch('odoo.addons.base.models.ir_mail_server.IrMailServer.send_email', return_value='test-msg-id'):
             mail._send()
 
         # Mail should not be cancelled (ONAY partner still allowed)

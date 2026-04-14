@@ -87,10 +87,15 @@ class TestIysConsent(TransactionCase):
             'name': 'Test IYS',
             'mobile': '05301234567',
             'email': 'test@example.com',
-            'iys_sms_consent': 'ONAY',
-            'iys_call_consent': 'RET',
-            'iys_email_consent': 'ONAY',
         })
+        # Simulate testing downstream data manually if we were to mock, 
+        # but the module tests its own unit logic independently.
+        
+        # We manually insert consent records directly using IysConsent
+        # instead of relying on the downstream fields to trigger them via create.
+        self.Consent._add('05301234567', 'MESAJ', 'ONAY')
+        self.Consent._add('05301234567', 'ARAMA', 'RET')
+        self.Consent._add('test@example.com', 'EPOSTA', 'ONAY')
         consents = partner._build_iys_consents()
         types = {c['type'] for c in consents}
         self.assertIn('MESAJ', types)
@@ -109,9 +114,6 @@ class TestIysConsent(TransactionCase):
         partner = self.Partner.create({
             'name': 'Pending Partner',
             'mobile': '05309999999',
-            'iys_sms_consent': 'pending',
-            'iys_call_consent': 'pending',
-            'iys_email_consent': 'pending',
         })
         consents = partner._build_iys_consents()
         self.assertEqual(consents, [])
@@ -125,8 +127,8 @@ class TestIysConsent(TransactionCase):
         partner = self.Partner.create({
             'name': 'Push Test',
             'mobile': '05301234561',
-            'iys_sms_consent': 'pending',
         })
+        self.Consent._add('05301234561', 'MESAJ', 'ONAY')
         account = self.env['iap.account'].create({
             'name': 'IYS Test Account',
             'provider': 'iys_verimor',

@@ -7,7 +7,7 @@
             <field name="name">iys.push.queue.list</field>
             <field name="model">iys.push.queue</field>
             <field name="arch" type="xml">
-                <list string="IYS Push Queue"
+                <tree string="IYS Push Queue"
                       decoration-danger="state == 'failed'"
                       decoration-success="state == 'done'"
                       decoration-muted="state == 'pending' and retry_count > 0">
@@ -21,7 +21,7 @@
                     <field name="next_retry"
                            invisible="state != 'pending'"/>
                     <field name="last_error" optional="hide"/>
-                </list>
+                </tree>
             </field>
         </record>
 

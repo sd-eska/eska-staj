@@ -12,6 +12,7 @@ class IapAccount(models.Model):
     _inherit = 'iap.account'
 
     provider = fields.Selection(
+        selection=[('sms_verimor', 'SMS Verimor')],
         selection_add=[('sms_verimor', 'SMS Verimor')],
         ondelete={'sms_verimor': 'cascade'},
     )

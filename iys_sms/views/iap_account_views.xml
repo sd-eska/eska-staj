@@ -6,9 +6,10 @@
         <record id="view_iap_account_form_iys_sms" model="ir.ui.view">
             <field name="name">iap.account.form.iys.sms</field>
             <field name="model">iap.account</field>
-            <field name="inherit_id" ref="iap.iap_account_form"/>
+            <field name="inherit_id" ref="iap.iap_account_view_form"/>
             <field name="arch" type="xml">
                 <xpath expr="//sheet" position="inside">
+                    <field name="provider" invisible="1"/>
                     <group string="IYS SMS Verimor Credentials"
                            invisible="provider != 'iys_sms_verimor'">
                         <field name="sms_username" placeholder="908501234567"/>

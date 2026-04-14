@@ -6,7 +6,7 @@ class IapAccount(models.Model):
     _inherit = 'iap.account'
 
     provider = fields.Selection(
-        selection_add=[('iys_verimor', 'IYS Verimor')],
+        selection=[('iys_verimor', 'IYS Verimor')],
         ondelete={'iys_verimor': 'cascade'},
     )
 
