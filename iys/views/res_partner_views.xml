@@ -2,14 +2,14 @@
 <odoo>
     <data>
 
-        <!-- res.partner form — audit fields only (consent fields added by channel modules) -->
+        <!-- res.partner form -->
         <record id="view_partner_form_iys" model="ir.ui.view">
             <field name="name">res.partner.form.iys</field>
             <field name="model">res.partner</field>
             <field name="inherit_id" ref="base.view_partner_form"/>
             <field name="arch" type="xml">
 
-                <!-- IYS tab skeleton — channel modules add their rows via XPath into this page -->
+                <!-- IYS tab skeleton -->
                 <xpath expr="//notebook" position="inside">
                     <page name="iys_consent" string="IYS Consent">
                         <group>

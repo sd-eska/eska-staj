@@ -9,7 +9,7 @@
         Odoo Enterprise VoIP softphone. It blocks outgoing calls if the
         destination has rejected voice calling consents in IYS.
     """,
-    'author': 'Eska',
+    'author': 'ESKA',
     'website': 'https://www.eska.com.tr',
     'license': 'LGPL-3',
     'depends': [

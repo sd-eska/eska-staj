@@ -4,7 +4,7 @@
     'version': '18.0.1.0.0',
     'category': 'Technical',
     'summary': 'IYS (İleti Yönetim Sistemi) base consent management',
-    'author': 'Eska',
+    'author': 'ESKA',
     'website': 'https://www.eska.com.tr',
     'license': 'LGPL-3',
     'depends': [

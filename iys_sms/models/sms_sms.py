@@ -10,17 +10,24 @@ _CTX_TRANSACTIONAL = 'iys_transactional_sms'
 
 
 class SmsSms(models.Model):
+
     _inherit = 'sms.sms'
 
 
     #override _send method through odoo native sms module
-    def _send(self, unlink_failed=False, unlink_sent=True, raise_exception=False):
+    def _send(self,
+              unlink_failed=False,
+              unlink_sent=True,
+              raise_exception=False,
+      ):
         """
         Override _send() to block outgoing SMS for IYS-rejected recipients.
 
         Transactional SMS (context key 'iys_transactional_sms=True') bypass the check.
         """
+
         if self.env.context.get(_CTX_TRANSACTIONAL):
+
             return super()._send(
                 unlink_failed=unlink_failed,
                 unlink_sent=unlink_sent,
@@ -35,16 +42,22 @@ class SmsSms(models.Model):
             number = sms.number or ''
             # Normalise to E.164 for lookup
             normalized = _normalize_phone(number) or number
-
-            if Consent._is_blocked(normalized, 'MESAJ'):
+            # türkçe değişcek
+            if Consent._is_blocked(normalized,
+                                   'MESAJ',
+            ):
+                # türkçe değişcek
                 _logger.info(
-                    'iys_sms: SMS to %s blocked – IYS MESAJ consent is RET', number
+                    'iys_sms: SMS to %s blocked – IYS MESAJ consent is RET',
+                    number,
                 )
                 blocked |= sms
+
             else:
                 allowed |= sms
 
         # Mark blocked messages as failed
+
         if blocked:
             blocked.write({
                 'state': 'error',
@@ -52,9 +65,11 @@ class SmsSms(models.Model):
             })
 
         if allowed:
+
             return super(SmsSms, allowed)._send(
                 unlink_failed=unlink_failed,
                 unlink_sent=unlink_sent,
                 raise_exception=raise_exception,
             )
+
         return True

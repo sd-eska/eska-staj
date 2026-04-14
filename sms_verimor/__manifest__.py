@@ -9,7 +9,7 @@
         No IYS logic here — this module only handles the transport layer.
         IYS consent blocking is handled by the iys_sms module.
     """,
-    'author': 'Eska',
+    'author': 'ESKA',
     'website': 'https://www.eska.com.tr',
     'license': 'LGPL-3',
     'depends': [

@@ -3,28 +3,29 @@ import logging
 import requests
 from odoo import api, fields, models
 from odoo.exceptions import ValidationError
+from dateutil import parser as dateparser
 
 _logger = logging.getLogger(__name__)
 
 CONSENT_TYPES = ['MESAJ', 'ARAMA', 'EPOSTA']
 
-# Verimor IYS endpoints
+
 _IYS_PUSH_ENDPOINT = 'https://sms.verimor.com.tr/v2/iys_consents.json'
 _IYS_PULL_ENDPOINT = 'https://sms.verimor.com.tr/v2/iys_status.json'
 
 
 class IysConsent(models.Model):
     """
-    Central IYS consent store – works like mail.blacklist / phone.blacklist.
+    Central IYS consent store.
 
-    One record per (recipient, consent_type) pair:
-      - status='RET'  + active=False  → blacklisted (blocked)
+    One record per pair:
+      - status='RET'  + active=False  → blacklisted
       - status='ONAY' + active=True   → explicitly allowed
-      - no record                     → pending (unknown)
+      - no record                     → pending
 
     Two-Way Sync:
-      - Odoo → IYS: triggered by res.partner write() (push)
-      - IYS → Odoo: cron job calls _pull_from_iys() (pull)
+      - Odoo → IYS: triggered by res.partner write()
+      - IYS → Odoo: cron job calls _pull_from_iys()
     """
     _name = 'iys.consent'
     _description = 'IYS Consent'
@@ -40,15 +41,16 @@ class IysConsent(models.Model):
 
     consent_type = fields.Selection(
         selection=[
-            ('MESAJ', 'SMS (MESAJ)'),
-            ('ARAMA', 'Voice Call (ARAMA)'),
-            ('EPOSTA', 'E-Mail (EPOSTA)'),
+            ('MESAJ', 'SMS'),
+            ('ARAMA', 'Voice Call'),
+            ('EPOSTA', 'E-Mail'),
         ],
         string='Consent Type',
         required=True,
         index=True,
     )
 
+ #onay durumu bekleniyor yazılacak
     status = fields.Selection(
         selection=[
             ('ONAY', 'Approved'),
@@ -60,7 +62,6 @@ class IysConsent(models.Model):
 
     active = fields.Boolean(
         default=True,
-        help='False means the recipient is blacklisted for this consent type.',
     )
 
     source = fields.Char(
@@ -68,7 +69,7 @@ class IysConsent(models.Model):
         default='HS_WEB',
         help='IYS source code (HS_WEB, HS_CAGRI_MERKEZI, etc.)',
     )
-
+#buradai türkçe alan adları kaldırılacak
     recipient_type = fields.Selection(
         selection=[('BIREYSEL', 'Individual'), ('TACIR', 'Merchant')],
         string='Recipient Type',
@@ -106,22 +107,27 @@ class IysConsent(models.Model):
         :param consent_date: datetime or None (defaults to now)
         :return: iys.consent record
         """
+
         if consent_type not in CONSENT_TYPES:
             raise ValidationError(
                 f"Invalid consent_type '{consent_type}'. Must be one of {CONSENT_TYPES}."
             )
+
+        #türkçe isimlendirmeler değişecek
         if status not in ('ONAY', 'RET'):
             raise ValidationError(
                 f"Invalid status '{status}'. Must be 'ONAY' or 'RET'."
             )
 
-        recipient = (recipient or '').strip().lower() if '@' in (recipient or '') else (recipient or '').strip()
+        recipient = (recipient or '').strip().lower() \
+            if '@' in (recipient or '') \
+            else (recipient or '').strip()
 
         existing = self.search([
             ('recipient', '=', recipient),
             ('consent_type', '=', consent_type),
         ], limit=1)
-
+#türkçe değişcek
         vals = {
             'status': status,
             'active': status == 'ONAY',
@@ -143,16 +149,21 @@ class IysConsent(models.Model):
     @api.model
     def _remove(self, recipient, consent_type):
         """
-        Remove (unlink) a consent record – effectively sets it back to pending.
+        Remove (unlink) a consent record.
 
         :param recipient: E.164 phone or e-mail
         :param consent_type: 'MESAJ' | 'ARAMA' | 'EPOSTA'
         """
-        recipient = (recipient or '').strip().lower() if '@' in (recipient or '') else (recipient or '').strip()
+
+        recipient = (recipient or '').strip().lower() \
+            if '@' in (recipient or '') \
+            else (recipient or '').strip()
+
         record = self.search([
             ('recipient', '=', recipient),
             ('consent_type', '=', consent_type),
         ], limit=1)
+
         if record:
             record.sudo().unlink()
 
@@ -162,8 +173,12 @@ class IysConsent(models.Model):
         Return the consent status for a given recipient and type.
 
         :return: 'ONAY' | 'RET' | 'pending'
+        #türkçe değişcek
         """
-        recipient = (recipient or '').strip().lower() if '@' in (recipient or '') else (recipient or '').strip()
+
+        recipient = (recipient or '').strip().lower() \
+            if '@' in (recipient or '') \
+            else (recipient or '').strip()
 
         record = self.with_context(active_test=False).search([
             ('recipient', '=', recipient),
@@ -177,17 +192,18 @@ class IysConsent(models.Model):
     @api.model
     def _is_blocked(self, recipient, consent_type):
         """Return True if the recipient has explicitly rejected this consent type."""
+        # türkçe değişcek
+
         return self._lookup(recipient, consent_type) == 'RET'
 
     # ------------------------------------------------------------------
-    # Two-Way Sync: IYS → Odoo (Pull)
+    # Two-Way Sync
     # ------------------------------------------------------------------
 
     @api.model
     def _pull_from_iys(self):
         """
-        Cron job entry point — pulls consent status changes from Verimor IYS
-        API and syncs them into Odoo.
+        Cron job entry point
 
         Strategy:
           1. Collect all (recipient, consent_type) pairs known in iys.consent.
@@ -196,15 +212,18 @@ class IysConsent(models.Model):
           4. Propagate changes to matching res.partner records.
           5. Update iys_last_pull_date on the iap.account credential record.
         """
+
         account = self.env['iap.account'].search(
             [('provider', '=', 'iys_verimor')], limit=1
         )
+
         if not account or not account.iys_username or not account.iys_password:
             _logger.warning('iys: Pull skipped – IYS credentials not configured.')
             return
 
         # Collect all known (recipient, type) pairs
         local_records = self.with_context(active_test=False).search([])
+
         if not local_records:
             _logger.info('iys: Pull skipped – no local consent records found.')
             return
@@ -214,6 +233,7 @@ class IysConsent(models.Model):
             {'recipient': rec.recipient, 'type': rec.consent_type}
             for rec in local_records
         ]
+
         payload = {
             'username': account.iys_username,
             'password': account.iys_password,
@@ -240,12 +260,13 @@ class IysConsent(models.Model):
         local_index = {(r.recipient, r.consent_type): r for r in local_records}
 
         changed_records = self.env['iys.consent']
+
         for item in remote_data:
             recipient = item.get('recipient', '').strip()
             c_type = item.get('type', '').strip()
             remote_status = item.get('status', '').strip()  # 'ONAY' or 'RET'
             remote_date_str = item.get('consent_date')
-
+            # türkçe değişcek
             if not recipient or c_type not in CONSENT_TYPES or remote_status not in ('ONAY', 'RET'):
                 continue
 
@@ -265,7 +286,6 @@ class IysConsent(models.Model):
             consent_date = None
             if remote_date_str:
                 try:
-                    from dateutil import parser as dateparser
                     consent_date = dateparser.parse(remote_date_str)
                 except (ValueError, ImportError):
                     pass
@@ -277,7 +297,9 @@ class IysConsent(models.Model):
                 source='IYS_PULL',
                 consent_date=consent_date,
             )
+
             changed_records |= updated
+
             _logger.info(
                 'iys: Pull – updated %s [%s]: %s → %s',
                 recipient, c_type,
@@ -291,6 +313,7 @@ class IysConsent(models.Model):
 
         # Update last pull timestamp
         account.sudo().write({'iys_last_pull_date': fields.Datetime.now()})
+
         _logger.info('iys: Pull complete – %d record(s) updated.', len(changed_records))
 
     @api.model
@@ -302,6 +325,7 @@ class IysConsent(models.Model):
 
         :param changed_consents: iys.consent recordset
         """
+
         Partner = self.env['res.partner']
 
         for consent in changed_consents:

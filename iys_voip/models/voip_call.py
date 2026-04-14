@@ -25,23 +25,46 @@ class VoipCall(models.Model):
         ' Used to correlate CALL_START and CALL_END events.',
     )
 
-    def create_and_format(self, res_id=None, res_model=None, **kwargs):
+    def create_and_format(
+            self,
+            res_id=None,
+            res_model=None,
+            **kwargs,
+      ):
         """
         Block creation of an outgoing call if the destination has rejected
         IYS ARAMA consent. Only outgoing calls are blocked; incoming calls
-        are not blocked here (they originate from the carrier, not Odoo).
+        are not blocked here.
         """
-        direction = kwargs.get('direction', 'outgoing')
+
+        direction = kwargs.get(
+            'direction',
+            'outgoing',
+         )
+
         if direction == 'outgoing':
-            phone_number = kwargs.get('phone_number', '')
+            phone_number = kwargs.get(
+                'phone_number',
+                '',
+            )
+
             normalized = _normalize_phone(phone_number) or phone_number
 
             Consent = self.env['iys.consent']
-            if Consent._is_blocked(normalized, 'ARAMA'):
+
+            if Consent._is_blocked(
+                    normalized,
+                    'ARAMA',
+            ):
                 raise UserError(
                     self.env._(
-                        'IYS ARAMA consent is rejected for %s. Call blocked.', phone_number
+                        'IYS ARAMA consent is rejected for %s. Call blocked.',
+                        phone_number,
                     )
                 )
 
-        return super().create_and_format(res_id=res_id, res_model=res_model, **kwargs)
+        return super().create_and_format(
+            res_id=res_id,
+            res_model=res_model,
+            **kwargs,
+        )

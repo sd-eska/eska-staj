@@ -84,7 +84,7 @@
             <field name="context">{'search_default_pending': 1}</field>
         </record>
 
-        <!-- Menu (under Technical) -->
+        <!-- Menu -->
         <menuitem id="menu_iys_root"
                   name="IYS"
                   parent="base.menu_administration"

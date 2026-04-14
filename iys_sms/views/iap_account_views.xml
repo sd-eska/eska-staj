@@ -2,7 +2,7 @@
 <odoo>
     <data>
 
-        <!-- IAP Account form – IYS SMS Verimor credentials section -->
+        <!-- IAP Account form -->
         <record id="view_iap_account_form_iys_sms" model="ir.ui.view">
             <field name="name">iap.account.form.iys.sms</field>
             <field name="model">iap.account</field>

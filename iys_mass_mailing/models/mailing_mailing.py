@@ -16,13 +16,15 @@ class MailingMailing(models.Model):
         We add all e-mail addresses that have an active iys.consent record
         with consent_type='EPOSTA' and status='RET'.
         """
-        opt_out = super()._get_opt_out_list()
 
+        opt_out = super()._get_opt_out_list()
+        # türkçe değişcek
         # Fetch all EPOSTA-rejected addresses from the consent store
         blocked = self.env['iys.consent'].with_context(active_test=False).search([
             ('consent_type', '=', 'EPOSTA'),
             ('status', '=', 'RET'),
         ])
+
         iys_opt_out = set(blocked.mapped('recipient'))
 
         if iys_opt_out:
