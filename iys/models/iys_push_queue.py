@@ -36,7 +36,6 @@ class IysPushQueue(models.Model):
 
     partner_id = fields.Many2one(
         'res.partner',
-        string='Partner',
         index=True,
         ondelete='cascade',
     )
@@ -53,7 +52,6 @@ class IysPushQueue(models.Model):
             ('done', 'Sent'),
             ('failed', 'Failed'),
         ],
-        string='State',
         default='pending',
         index=True,
         readonly=True,
@@ -62,13 +60,12 @@ class IysPushQueue(models.Model):
     retry_count = fields.Integer(string='Retries', default=0, readonly=True)
 
     next_retry = fields.Datetime(
-        string='Next Retry',
         default=fields.Datetime.now,
         index=True,
         readonly=True,
     )
 
-    last_error = fields.Text(string='Last Error', readonly=True)
+    last_error = fields.Text(readonly=True)
 
     @api.model
     def _enqueue(self, partner, payload_dict):

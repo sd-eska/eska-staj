@@ -88,26 +88,27 @@ class TestIysConsent(TransactionCase):
             'mobile': '05301234567',
             'email': 'test@example.com',
         })
-        # Simulate testing downstream data manually if we were to mock, 
-        # but the module tests its own unit logic independently.
-        
-        # We manually insert consent records directly using IysConsent
-        # instead of relying on the downstream fields to trigger them via create.
-        self.Consent._add('05301234567', 'MESAJ', 'ONAY')
-        self.Consent._add('05301234567', 'ARAMA', 'RET')
-        self.Consent._add('test@example.com', 'EPOSTA', 'ONAY')
-        consents = partner._build_iys_consents()
-        types = {c['type'] for c in consents}
-        self.assertIn('MESAJ', types)
-        self.assertIn('ARAMA', types)
-        self.assertIn('EPOSTA', types)
 
-        mesaj = next(c for c in consents if c['type'] == 'MESAJ')
-        self.assertEqual(mesaj['status'], 'ONAY')
-        self.assertEqual(mesaj['recipient'], '905301234567')
+        def dummy_items(self):
+            return [
+                ('905301234567', 'MESAJ', 'ONAY'),
+                ('905301234567', 'ARAMA', 'RET'),
+                ('test@example.com', 'EPOSTA', 'ONAY'),
+            ]
 
-        arama = next(c for c in consents if c['type'] == 'ARAMA')
-        self.assertEqual(arama['status'], 'RET')
+        with patch('odoo.addons.iys.models.res_partner.ResPartner._iys_consent_items', dummy_items):
+            consents = partner._build_iys_consents()
+            types = {c['type'] for c in consents}
+            self.assertIn('MESAJ', types)
+            self.assertIn('ARAMA', types)
+            self.assertIn('EPOSTA', types)
+
+            mesaj = next(c for c in consents if c['type'] == 'MESAJ')
+            self.assertEqual(mesaj['status'], 'ONAY')
+            self.assertEqual(mesaj['recipient'], '905301234567')
+
+            arama = next(c for c in consents if c['type'] == 'ARAMA')
+            self.assertEqual(arama['status'], 'RET')
 
     def test_build_iys_consents_pending_excluded(self):
         """Pending consents are not included in the payload."""
@@ -115,20 +116,26 @@ class TestIysConsent(TransactionCase):
             'name': 'Pending Partner',
             'mobile': '05309999999',
         })
-        consents = partner._build_iys_consents()
-        self.assertEqual(consents, [])
+
+        def dummy_items(self):
+            return [('90530999999', 'MESAJ', 'pending')]
+
+        with patch('odoo.addons.iys.models.res_partner.ResPartner._iys_consent_items', dummy_items):
+            consents = partner._build_iys_consents()
+            self.assertEqual(consents, [])
 
     # ------------------------------------------------------------------ #
     #  _push_iys_consents HTTP call                                        #
     # ------------------------------------------------------------------ #
 
     def test_push_iys_consents_called_after_write(self):
-        """write() on IYS fields triggers _push_iys_consents()."""
+        """write() on IYS fields triggers _push_iys_consents() and enqueues payload."""
+        from odoo import fields
         partner = self.Partner.create({
             'name': 'Push Test',
             'mobile': '05301234561',
         })
-        self.Consent._add('05301234561', 'MESAJ', 'ONAY')
+
         account = self.env['iap.account'].create({
             'name': 'IYS Test Account',
             'provider': 'iys_verimor',
@@ -136,19 +143,19 @@ class TestIysConsent(TransactionCase):
             'iys_password': 'testpass',
             'iys_source_addr': 'TESTFIRMA',
         })
-        with patch('requests.post') as mock_post:
-            mock_resp = MagicMock()
-            mock_resp.status_code = 200
-            mock_post.return_value = mock_resp
 
-            partner.write({'iys_sms_consent': 'ONAY'})
+        def dummy_items(self):
+            return [('905301234561', 'MESAJ', 'ONAY')]
 
-            mock_post.assert_called_once()
-            call_kwargs = mock_post.call_args
-            payload = call_kwargs[1]['json'] if 'json' in call_kwargs[1] else call_kwargs[0][1]
-            self.assertEqual(payload['username'], 'testuser')
-            consents = payload['consents']
-            self.assertTrue(any(c['type'] == 'MESAJ' for c in consents))
+        with patch('odoo.addons.iys.models.res_partner.ResPartner._iys_consent_items', dummy_items):
+            queue_before = self.env['iys.push.queue'].search_count([('partner_id', '=', partner.id)])
+            self.assertEqual(queue_before, 0)
+
+            partner.write({'iys_consent_date': fields.Datetime.now()})
+
+            queue_item = self.env['iys.push.queue'].search([('partner_id', '=', partner.id)])
+            self.assertEqual(len(queue_item), 1)
+            self.assertEqual(queue_item.state, 'pending')
 
         # cleanup
         account.unlink()

@@ -4,7 +4,7 @@
     'version': '17.0.1.0.0',
     'category': 'Technical',
     'summary': 'IYS MESAJ consent blocking for outgoing SMS',
-    'author': 'ESKA',
+    'author': 'ESKA, Odoo Community Association (OCA)',
     'website': 'https://www.eska.com.tr',
     'license': 'LGPL-3',
     'depends': [

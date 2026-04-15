@@ -33,7 +33,6 @@ class IysConsent(models.Model):
     _rec_name = 'recipient'
 
     recipient = fields.Char(
-        string='Recipient',
         required=True,
         index=True,
         help='E.164 phone number (905XXXXXXXXX) or e-mail address',
@@ -45,7 +44,6 @@ class IysConsent(models.Model):
             ('ARAMA', 'Voice Call'),
             ('EPOSTA', 'E-Mail'),
         ],
-        string='Consent Type',
         required=True,
         index=True,
     )
@@ -56,7 +54,6 @@ class IysConsent(models.Model):
             ('ONAY', 'Approved'),
             ('RET', 'Rejected'),
         ],
-        string='Status',
         required=True,
     )
 
@@ -65,19 +62,16 @@ class IysConsent(models.Model):
     )
 
     source = fields.Char(
-        string='Source',
         default='HS_WEB',
         help='IYS source code (HS_WEB, HS_CAGRI_MERKEZI, etc.)',
     )
 #buradai türkçe alan adları kaldırılacak
     recipient_type = fields.Selection(
         selection=[('BIREYSEL', 'Individual'), ('TACIR', 'Merchant')],
-        string='Recipient Type',
         default='BIREYSEL',
     )
 
     consent_date = fields.Datetime(
-        string='Consent Date',
         default=fields.Datetime.now,
     )
 
@@ -110,13 +104,19 @@ class IysConsent(models.Model):
 
         if consent_type not in CONSENT_TYPES:
             raise ValidationError(
-                f"Invalid consent_type '{consent_type}'. Must be one of {CONSENT_TYPES}."
+                self.env._(
+                    "Invalid consent_type '%(ctype)s'. Must be one of %(types)s.",
+                    {
+                        'ctype': consent_type,
+                        'types': CONSENT_TYPES,
+                    }
+                )
             )
 
         #türkçe isimlendirmeler değişecek
         if status not in ('ONAY', 'RET'):
             raise ValidationError(
-                f"Invalid status '{status}'. Must be 'ONAY' or 'RET'."
+                self.env._("Invalid status '%s'. Must be 'ONAY' or 'RET'.", status)
             )
 
         recipient = (recipient or '').strip().lower() \
@@ -222,7 +222,7 @@ class IysConsent(models.Model):
             return
 
         # Collect all known (recipient, type) pairs
-        local_records = self.with_context(active_test=False).search([])
+        local_records = self.with_context(active_test=False).search([])  # pylint: disable=no-search-all
 
         if not local_records:
             _logger.info('iys: Pull skipped – no local consent records found.')
@@ -288,7 +288,7 @@ class IysConsent(models.Model):
                 try:
                     consent_date = dateparser.parse(remote_date_str)
                 except (ValueError, ImportError):
-                    pass
+                    _logger.warning("iys: Invalid remote_date_str '%s'", remote_date_str)
 
             updated = self._add(
                 recipient=recipient,

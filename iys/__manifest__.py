@@ -4,7 +4,7 @@
     'version': '17.0.1.0.0',
     'category': 'Technical',
     'summary': 'IYS (İleti Yönetim Sistemi) base consent management',
-    'author': 'ESKA',
+    'author': 'ESKA, Odoo Community Association (OCA)',
     'website': 'https://www.eska.com.tr',
     'license': 'LGPL-3',
     'depends': [

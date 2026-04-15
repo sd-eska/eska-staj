@@ -75,13 +75,16 @@ class IapAccount(models.Model):
 
             else:
                 raise UserError(
-                    self.env._('Balance check failed (HTTP %s): %s',
-                               resp.status_code,
-                               resp.text,
+                    self.env._(
+                        'Balance check failed (HTTP %(status_code)s): %(text)s',
+                        {
+                            'status_code': resp.status_code,
+                            'text': resp.text,
+                        }
                     )
                 )
 
         except requests.RequestException as exc:
-            raise UserError(self.env._('Network error: %s',
-                                       str(exc)),
+            raise UserError(
+                self.env._('Network error: %s', str(exc))
             ) from exc

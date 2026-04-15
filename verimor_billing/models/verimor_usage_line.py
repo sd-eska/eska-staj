@@ -22,7 +22,6 @@ class VerimorUsageLine(models.Model):
             ('sms', 'SMS'),
             ('call', 'VoIP Call'),
         ],
-        string='Usage Type',
         required=True,
         index=True,
     )
@@ -35,27 +34,22 @@ class VerimorUsageLine(models.Model):
     )
     company_id = fields.Many2one(
         'res.company',
-        string='Company',
         default=lambda self: self.env.company,
         required=True,
     )
     event_date = fields.Datetime(
-        string='Event Date',
         required=True,
         default=fields.Datetime.now,
     )
     quantity = fields.Float(
-        string='Quantity',
         default=1.0,
         help='Number of SMS messages or call minutes.',
     )
     unit_price = fields.Float(
-        string='Unit Price',
         digits=(16, 4),
         help='Price per unit in company currency.',
     )
     amount = fields.Float(
-        string='Amount',
         compute='_compute_amount',
         store=True,
         digits=(16, 2),
@@ -67,22 +61,19 @@ class VerimorUsageLine(models.Model):
     )
     invoice_line_id = fields.Many2one(
         'account.move.line',
-        string='Invoice Line',
         readonly=True,
         ondelete='set null',
         help='Set when this usage line has been invoiced.',
     )
     invoiced = fields.Boolean(
-        string='Invoiced',
         compute='_compute_invoiced',
         store=True,
         index=True,
     )
     reference = fields.Char(
-        string='Reference',
         help='SMS UUID, VoIP call ID, or other identifier.',
     )
-    description = fields.Char(string='Description')
+    description = fields.Char()
 
     @api.depends('quantity', 'unit_price')
     def _compute_amount(self):

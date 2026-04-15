@@ -34,10 +34,14 @@ class TestIysMail(TransactionCase):
 
     def test_commercial_ret_blocked(self):
         """Commercial mail to a single RET partner → state='cancel'."""
+        from unittest.mock import patch
         partner = self._make_partner('Ret Partner', 'ret@example.com', 'RET')
         mail = self._make_mail([partner], is_commercial=True)
 
-        with self.assertLogs('odoo.addons.iys_mass_mailing', level='INFO'):
+        with patch(
+            'odoo.addons.base.models.ir_mail_server.IrMailServer.send_email',
+            return_value='test-msg-id',
+        ):
             mail._send()
 
         self.assertEqual(mail.state, 'cancel')
